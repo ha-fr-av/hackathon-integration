@@ -2,13 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	// "github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aws/aws-lambda-go/lambda"
 )
 
-type output struct{ hello string }
+type output struct{ Jwt string }
 
 type Handler struct {
 }
@@ -17,13 +16,20 @@ func NewHandler() Handler {
 	return Handler{}
 }
 
-func (h Handler) Handle(ctx context.Context) (output, error) {
+func (h Handler) Handle(ctx context.Context) (o output, err error) {
 
-	fmt.Println("hello world")
+	cid, err := Challenge()
 
-	o := output{hello: "world"}
+	if err != nil {
+		return
+	}
+	jwt, err := Response(cid)
 
-	return o, nil
+	if err != nil {
+		return
+	}
+
+	return output{Jwt: jwt}, nil
 }
 
 func main() {

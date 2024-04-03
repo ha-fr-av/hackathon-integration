@@ -37,8 +37,23 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Minutes(jsii.Number(15))),
 	})
 
+	generateTokenLambdaFunction := awslambdago.NewGoFunction(stack, jsii.String("generateTokenLambdaFunction"), &awslambdago.GoFunctionProps{
+		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
+		Architecture: awslambda.Architecture_ARM_64(),
+		Entry:        jsii.String("../lambdas/generate-token"),
+		Timeout:      awscdk.Duration_Minutes(jsii.Number(15)),
+		Tracing:      awslambda.Tracing_ACTIVE,
+	})
+
+	generateTokenLambda := tasks.NewLambdaInvoke(stack, jsii.String("generateTokenLambda"), &tasks.LambdaInvokeProps{
+		LambdaFunction: generateTokenLambdaFunction,
+		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Minutes(jsii.Number(15))),
+	})
+
+	definition := helloLambda.Next(generateTokenLambda)
+
 	sfn.NewStateMachine(stack, jsii.String("TestStateMachine"), &sfn.StateMachineProps{
-		Definition: helloLambda,
+		Definition: definition,
 		Timeout:    awscdk.Duration_Minutes(jsii.Number(10)),
 		Comment:    jsii.String("Test State Machine"),
 	})
