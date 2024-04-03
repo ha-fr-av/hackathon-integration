@@ -2,7 +2,13 @@ package main
 
 import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	sfn "github.com/aws/aws-cdk-go/awscdk/v2/awsstepfunctions"
+	tasks "github.com/aws/aws-cdk-go/awscdk/v2/awsstepfunctionstasks"
+	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
+
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
+
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -18,12 +24,24 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	// The code that defines your stack goes here
+	helloLambdaFunction := awslambdago.NewGoFunction(stack, jsii.String("HelloLambda"), &awslambdago.GoFunctionProps{
+		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
+		Architecture: awslambda.Architecture_ARM_64(),
+		Entry:        jsii.String("../lambdas/hello"),
+		Timeout:      awscdk.Duration_Minutes(jsii.Number(15)),
+		Tracing:      awslambda.Tracing_ACTIVE,
+	})
 
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("HackathonIntegrationQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
+	helloLambda := tasks.NewLambdaInvoke(stack, jsii.String("helloLambda"), &tasks.LambdaInvokeProps{
+		LambdaFunction: helloLambdaFunction,
+		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Minutes(jsii.Number(15))),
+	})
+
+	sfn.NewStateMachine(stack, jsii.String("TestStateMachine"), &sfn.StateMachineProps{
+		Definition: helloLambda,
+		Timeout:    awscdk.Duration_Minutes(jsii.Number(10)),
+		Comment:    jsii.String("Test State Machine"),
+	})
 
 	return stack
 }
