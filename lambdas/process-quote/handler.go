@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
@@ -43,7 +44,12 @@ var payload = map[string]any{
 	"transactionType": "edit-vehicle",
 }
 
-func Handler(ctx context.Context, event event) (any, error) {
+type QuoteResponseBody struct {
+	QuoteID       string `json:"quoteId"`
+	QuoteRejected bool   `json:"quoteRejected"`
+}
+
+func Handler(ctx context.Context, event event) (*http.Response, error) {
 
 	jsonBody, err := json.Marshal(payload)
 
@@ -62,11 +68,13 @@ func Handler(ctx context.Context, event event) (any, error) {
 
 	defer resp.Body.Close()
 
-	var dat map[string]any
+	validationErr := validateTest(resp)
 
-	err = json.NewDecoder(resp.Body).Decode(&dat)
+	if validationErr != nil {
+		return resp, validationErr
+	}
 
-	return dat, nil
+	return resp, nil
 
 }
 
@@ -88,4 +96,30 @@ func main() {
 		fmt.Printf("%s", err.Error())
 	}
 	fmt.Printf("%v", data)
+}
+
+func validateTest(h *http.Response) error {
+
+	if h.StatusCode != http.StatusCreated {
+		return errors.New("Invalid response status code")
+	}
+
+	var dat QuoteResponseBody
+
+	err := json.NewDecoder(h.Body).Decode(&dat)
+
+	if err != nil {
+		return errors.New("Cannot parse response body")
+	}
+
+	if dat.QuoteID == "" {
+		return errors.New("QuoteId not returned")
+	}
+
+	if dat.QuoteRejected {
+		return errors.New("Quote Rejected")
+	}
+
+	return nil
+
 }
