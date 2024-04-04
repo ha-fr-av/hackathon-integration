@@ -51,7 +51,7 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 	vqtask := tasks.NewLambdaInvoke(stack, jsii.String("verifyQuoteTask"), &tasks.LambdaInvokeProps{
 		LambdaFunction: vqfunc,
 		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
-		
+		InputPath:      jsii.String("$.Payload.data"),
 	})
 
 	hellofunc := awslambdago.NewGoFunction(stack, jsii.String("helloFunction"), &awslambdago.GoFunctionProps{
