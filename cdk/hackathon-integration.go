@@ -24,33 +24,33 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 	}
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
-	helloLambdaFunction := awslambdago.NewGoFunction(stack, jsii.String("HelloLambda"), &awslambdago.GoFunctionProps{
+	pqfunc := awslambdago.NewGoFunction(stack, jsii.String("processQuoteLambdaFunction"), &awslambdago.GoFunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
 		Architecture: awslambda.Architecture_ARM_64(),
-		Entry:        jsii.String("../lambdas/hello"),
-		Timeout:      awscdk.Duration_Minutes(jsii.Number(15)),
+		Entry:        jsii.String("../lambdas/process-quote"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
 		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
-	helloLambda := tasks.NewLambdaInvoke(stack, jsii.String("helloLambda"), &tasks.LambdaInvokeProps{
-		LambdaFunction: helloLambdaFunction,
-		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Minutes(jsii.Number(15))),
+	pqtask := tasks.NewLambdaInvoke(stack, jsii.String("processQuoteLambdaTask"), &tasks.LambdaInvokeProps{
+		LambdaFunction: pqfunc,
+		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
 	})
 
-	generateTokenLambdaFunction := awslambdago.NewGoFunction(stack, jsii.String("generateTokenLambdaFunction"), &awslambdago.GoFunctionProps{
+	vqfunc := awslambdago.NewGoFunction(stack, jsii.String("verifyQuoteLambdaFunction"), &awslambdago.GoFunctionProps{
 		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
 		Architecture: awslambda.Architecture_ARM_64(),
-		Entry:        jsii.String("../lambdas/generate-token"),
-		Timeout:      awscdk.Duration_Minutes(jsii.Number(15)),
+		Entry:        jsii.String("../lambdas/retrieve-quote"),
+		Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
 		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
-	generateTokenLambda := tasks.NewLambdaInvoke(stack, jsii.String("generateTokenLambda"), &tasks.LambdaInvokeProps{
-		LambdaFunction: generateTokenLambdaFunction,
-		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Minutes(jsii.Number(15))),
+	vqtask := tasks.NewLambdaInvoke(stack, jsii.String("verifyQuoteTask"), &tasks.LambdaInvokeProps{
+		LambdaFunction: vqfunc,
+		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
 	})
 
-	definition := helloLambda.Next(generateTokenLambda)
+	definition := pqtask.Next(vqtask)
 
 	sfn.NewStateMachine(stack, jsii.String("TestStateMachine"), &sfn.StateMachineProps{
 		Definition: definition,
