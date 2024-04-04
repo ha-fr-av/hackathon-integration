@@ -29,19 +29,22 @@ func (h *Handler) Handle(ctx context.Context, event event) (common.StepOutput[ou
 
 	res, err := act(a)
 	if err != nil {
-		output.Error = err.Error()
+		msg := err.Error()
+		output.Error = &msg
 		return output, nil
 	}
 
 	var dat policy.Policy
 	if err := json.NewDecoder(res.Body).Decode(&dat); err != nil {
-		output.Error = err.Error()
+		msg := err.Error()
+		output.Error = &msg
 		return output, nil
 	}
 
 	err = assert(input{StatusCode: res.StatusCode, Payload: dat})
 	if err != nil {
-		output.Error = err.Error()
+		msg := err.Error()
+		output.Error = &msg
 		return output, nil
 	}
 

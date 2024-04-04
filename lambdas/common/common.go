@@ -1,8 +1,8 @@
 package common
 
 type StepOutput[T any] struct {
-	Payload T      `json:"data"`
-	Error   string `json:"error"`
+	Payload T       `json:"data"`
+	Error   *string `json:"error"`
 }
 
 type StepInput[T any] struct {
