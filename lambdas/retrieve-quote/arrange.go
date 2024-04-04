@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/ha-fr-av/hackathon-integration/lambdas/common"
 )
 
 // const (
@@ -15,45 +13,23 @@ import (
 // 	domain    = "https://m3yktt0wkj.execute-api.eu-west-1.amazonaws.com"
 // )
 
-var payload = map[string]any{
-	"coverDetails": map[string]any{
-		"typeOfUse":         "sdpc",
-		"annualMileage":     10000,
-		"locationOvernight": "4",
-		"locationDaytime":   "VKD1",
-	},
-	"driver": map[string]any{
-		"owner":            true,
-		"registeredKeeper": true,
-	},
-	"vehicle": map[string]any{
-		"tracker":            false,
-		"alarmImmobilizer":   "#F",
-		"dateOfPurchase":     "2021-11-21T00:00:00.000Z",
-		"value":              30000,
-		"yearOfManufacture":  "2020",
-		"registrationNumber": "AP65GVW",
-	},
-	"effectiveFrom":   "2024-03-11T11:03:19.226Z",
-	"transactionType": "edit-vehicle",
-}
-
-func arrange(e common.StepInput[inputParams]) (ActionParams, error) {
+func arrange(e event) (ActionParams, error) {
 	headers := make(map[string]string)
 	headers["Authorization"] = fmt.Sprintf("Bearer %s", e.UserInfo.JWT)
 	headers["policyholder-dob"] = e.UserInfo.Dob
 	headers["Host"] = "localhost"
 
 	return ActionParams{
-		Endpoint: getEndpoint(e.Host.Domain, e.Payload.PolicyID, e.Payload.InsuredID),
+		Endpoint: getEndpoint(e.Host.Domain, e.Payload.QuoteID),
 		Headers:  headers,
-		Payload:  payload,
+		QuoteID:  e.Payload.QuoteID,
 	}, nil
 }
 
 /**
 * build the endpoint to get an mta quote
 **/
-func getEndpoint(domain, policyId, insuredId string) string {
-	return fmt.Sprintf("%s/prod/mta/%s/change-vehicle/%s", domain, policyId, insuredId)
+func getEndpoint(domain, quoteId string) string {
+	return fmt.Sprintf("%s/prod/quote/%s", domain, quoteId)
+
 }
