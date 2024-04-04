@@ -54,23 +54,25 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 		InputPath:      jsii.String("$.Payload.data"),
 	})
 
-	hellofunc := awslambdago.NewGoFunction(stack, jsii.String("helloFunction"), &awslambdago.GoFunctionProps{
-		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
-		Architecture: awslambda.Architecture_ARM_64(),
-		Entry:        jsii.String("../lambdas/hello"),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
-		Tracing:      awslambda.Tracing_ACTIVE,
-	})
+	// hellofunc := awslambdago.NewGoFunction(stack, jsii.String("helloFunction"), &awslambdago.GoFunctionProps{
+	// 	Runtime:      awslambda.Runtime_PROVIDED_AL2(),
+	// 	Architecture: awslambda.Architecture_ARM_64(),
+	// 	Entry:        jsii.String("../lambdas/hello"),
+	// 	Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
+	// 	Tracing:      awslambda.Tracing_ACTIVE,
+	// })
 
-	hellotask := tasks.NewLambdaInvoke(stack, jsii.String("helloTask"), &tasks.LambdaInvokeProps{
-		LambdaFunction: hellofunc,
-		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
-	})
+	// hellotask := tasks.NewLambdaInvoke(stack, jsii.String("helloTask"), &tasks.LambdaInvokeProps{
+	// 	LambdaFunction: hellofunc,
+	// 	TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
+	// })
 
-	definition := pqtask.Next(vqtask)
+	// definition := pqtask.Next(vqtask)
 
-	choice := sfn.NewChoice(stack, jsii.String("Choice"), nil)
-	condition1 := sfn.Condition_StringEquals(jsii.String("$.Payload.hello"), jsii.String("yes"))
+	// choice := sfn.NewChoice(stack, jsii.String("Choice"), nil)
+	// condition1 := sfn.Condition_StringEquals(jsii.String("$.Payload.hello"), jsii.String("yes"))
+	pqchoice := sfn.NewChoice(stack, jsii.String("Process Quote Choice"), nil)
+	pqcondition := sfn.Condition_IsNotString(jsii.String("$.Payload.error"))
 
 	topic := sns.NewTopic(stack, jsii.String("HelloTopic"), nil)
 
@@ -83,22 +85,66 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 		ResultPath: jsii.String("$.sns"),
 	})
 
-	// step1 := sfn.NewPass(stack, jsii.String("Step1"), nil)
-	step2 := sfn.NewPass(stack, jsii.String("Step2"), nil)
-	finish := sfn.NewPass(stack, jsii.String("Finish"), nil)
+	// vqfunc := awslambdago.NewGoFunction(stack, jsii.String("verifyQuoteLambdaFunction"), &awslambdago.GoFunctionProps{
+	// 	Runtime:      awslambda.Runtime_PROVIDED_AL2(),
+	// 	Architecture: awslambda.Architecture_ARM_64(),
+	// 	Entry:        jsii.String("../lambdas/retrieve-quote"),
+	// 	Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
+	// 	Tracing:      awslambda.Tracing_ACTIVE,
+	// })
 
-	hd := hellotask.Next(choice.When(condition1, publishMessage, nil).Otherwise(step2).Afterwards(nil).Next(finish))
+	// vqtask := tasks.NewLambdaInvoke(stack, jsii.String("verifyQuoteTask"), &tasks.LambdaInvokeProps{
+	// 	LambdaFunction: vqfunc,
+	// 	TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
+	// })
+
+	definition := pqtask.Next(pqchoice.When(pqcondition, vqtask, nil).Otherwise(publishMessage))
+
+	// hellofunc := awslambdago.NewGoFunction(stack, jsii.String("helloFunction"), &awslambdago.GoFunctionProps{
+	// 	Runtime:      awslambda.Runtime_PROVIDED_AL2(),
+	// 	Architecture: awslambda.Architecture_ARM_64(),
+	// 	Entry:        jsii.String("../lambdas/hello"),
+	// 	Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
+	// 	Tracing:      awslambda.Tracing_ACTIVE,
+	// })
+
+	// hellotask := tasks.NewLambdaInvoke(stack, jsii.String("helloTask"), &tasks.LambdaInvokeProps{
+	// 	LambdaFunction: hellofunc,
+	// 	TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
+	// })
+
+	// definition := pqtask.Next(vqtask)
+
+	// choice := sfn.NewChoice(stack, jsii.String("Choice"), nil)
+	// condition1 := sfn.Condition_StringEquals(jsii.String("$.Payload.hello"), jsii.String("yes"))
+
+	// topic := sns.NewTopic(stack, jsii.String("HelloTopic"), nil)
+
+	// publishMessage := tasks.NewSnsPublish(stack, jsii.String("Publish message"), &tasks.SnsPublishProps{
+	// 	Topic: topic,
+	// 	Message: sfn.TaskInput_FromObject(&map[string]any{"payload.$": "$.Payload",
+	// 		"free text": "goes here"}),
+	// 	// Message: sfn.TaskInput_FromJsonPathAt(jsii.String("States.Format('A job submitted through Step Functions failed for document id {}', $.Payload.hello)")),
+
+	// 	ResultPath: jsii.String("$.sns"),
+	// })
+
+	// step1 := sfn.NewPass(stack, jsii.String("Step1"), nil)
+	// step2 := sfn.NewPass(stack, jsii.String("Step2"), nil)
+	// finish := sfn.NewPass(stack, jsii.String("Finish"), nil)
+
+	// hd := hellotask.Next(choice.When(condition1, publishMessage, nil).Otherwise(step2).Afterwards(nil).Next(finish))
 
 	sfn.NewStateMachine(stack, jsii.String("TestStateMachine"), &sfn.StateMachineProps{
 		Definition: definition,
 		Timeout:    awscdk.Duration_Minutes(jsii.Number(10)),
 		Comment:    jsii.String("Test State Machine"),
 	})
-	sfn.NewStateMachine(stack, jsii.String("HelloStateMachine"), &sfn.StateMachineProps{
-		Definition: hd,
-		Timeout:    awscdk.Duration_Minutes(jsii.Number(10)),
-		Comment:    jsii.String("Hello State Machine"),
-	})
+	// sfn.NewStateMachine(stack, jsii.String("HelloStateMachine"), &sfn.StateMachineProps{
+	// 	Definition: hd,
+	// 	Timeout:    awscdk.Duration_Minutes(jsii.Number(10)),
+	// 	Comment:    jsii.String("Hello State Machine"),
+	// })
 	return stack
 }
 
