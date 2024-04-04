@@ -62,9 +62,9 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 
 	topic := sns.NewTopic(stack, jsii.String("HelloTopic"), nil)
 
-	publishMessage := tasks.NewSnsPublish(stack, jsii.String("Publish message"), &tasks.SnsPublishProps{
+	publishMessage := tasks.NewSnsPublish(stack, jsii.String("Alert slack on Error"), &tasks.SnsPublishProps{
 		Topic:   topic,
-		Message: sfn.TaskInput_FromObject(&map[string]any{"payload.$": "$.Payload"}),
+		Message: sfn.TaskInput_FromObject(&map[string]any{"errormessage.$": "$.Payload.error", "executionId.$": "$$.Execution.Id"}),
 		// Message: sfn.TaskInput_FromJsonPathAt(jsii.String("States.Format('A job submitted through Step Functions failed for document id {}', $.Payload.hello)")),
 
 		ResultPath: jsii.String("$.sns"),
