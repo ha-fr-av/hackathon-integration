@@ -54,10 +54,10 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 		InputPath:      jsii.String("$.Payload.data"),
 	})
 
-	pqchoice := sfn.NewChoice(stack, jsii.String("Process Quote Choice"), nil)
+	pqchoice := sfn.NewChoice(stack, jsii.String("Quote Processed Successfully?"), nil)
 	pqcondition := sfn.Condition_IsNotString(jsii.String("$.Payload.error"))
 
-	vqchoice := sfn.NewChoice(stack, jsii.String("Verify Quote Choice"), nil)
+	vqchoice := sfn.NewChoice(stack, jsii.String("Quote Verified Successfully?"), nil)
 	vqcondition := sfn.Condition_IsNotString(jsii.String("$.Payload.error"))
 
 	topic := sns.NewTopic(stack, jsii.String("HelloTopic"), nil)
