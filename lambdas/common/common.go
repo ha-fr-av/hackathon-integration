@@ -1,6 +1,6 @@
 package common
 
 type StepResponse struct {
-	Payload string `json:"payload"`
+	Payload string `json:"data"`
 	Status  int    `json":"status"`
 }

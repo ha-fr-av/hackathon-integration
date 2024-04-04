@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 
 	"github.com/ha-fr-av/hackathon-integration/lambdas/common"
 )
@@ -30,7 +31,12 @@ func (h *Handler) Handle(ctx context.Context, event map[string]any) (common.Step
 		return output, err
 	}
 
-	output.Payload = "OK"
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		return output, err
+	}
+
+	output.Payload = string(b)
 	output.Status = 200
 
 	return output, nil
