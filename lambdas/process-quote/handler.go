@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
-	"io"
+	"encoding/json"
+	"errors"
+	"net/http"
 
 	"github.com/ha-fr-av/hackathon-integration/lambdas/common"
 )
@@ -27,17 +29,20 @@ func (h *Handler) Handle(ctx context.Context, event map[string]any) (common.Step
 		return output, err
 	}
 
-	if err = assert(res); err != nil {
+	var dat QuoteResponseBody
+	if err := json.NewDecoder(res.Body).Decode(&dat); err != nil {
 		return output, err
 	}
 
-	b, err := io.ReadAll(res.Body)
-	if err != nil {
+	if res.StatusCode != http.StatusCreated {
+		return output, errors.New("Invalid response status code")
+	}
+
+	if err = assert(dat); err != nil {
 		return output, err
 	}
 
-	output.Payload = string(b)
-	output.Status = 200
+	output.Payload = dat
 
 	return output, nil
 }
