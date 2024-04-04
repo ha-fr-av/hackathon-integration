@@ -28,13 +28,13 @@ func NewHackathonIntegrationStack(scope constructs.Construct, id string, props *
 		Runtime:      awslambda.Runtime_PROVIDED_AL2(),
 		Architecture: awslambda.Architecture_ARM_64(),
 		Entry:        jsii.String("../lambdas/process-quote"),
-		Timeout:      awscdk.Duration_Seconds(jsii.Number(15)),
+		Timeout:      awscdk.Duration_Minutes(jsii.Number(1)),
 		Tracing:      awslambda.Tracing_ACTIVE,
 	})
 
 	pqtask := tasks.NewLambdaInvoke(stack, jsii.String("processQuoteLambdaTask"), &tasks.LambdaInvokeProps{
 		LambdaFunction: pqfunc,
-		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(20))),
+		TaskTimeout:    sfn.Timeout_Duration(awscdk.Duration_Seconds(jsii.Number(65))),
 	})
 
 	vqfunc := awslambdago.NewGoFunction(stack, jsii.String("verifyQuoteLambdaFunction"), &awslambdago.GoFunctionProps{
